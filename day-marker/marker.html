@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Days of Code Tracker</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --completed-bg: #22c55e;
+            --hover-bg: #333333;
+            --accent-color: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        #progress-text {
+            font-size: 1.2rem;
+            color: #aaa;
+            font-weight: 500;
+        }
+
+        button#reset-btn {
+            background-color: transparent;
+            border: 1px solid #555;
+            color: #888;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        button#reset-btn:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 12px;
+            width: 100%;
+            max-width: 800px;
+            padding-bottom: 40px;
+        }
+
+        .day-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-weight: bold;
+            font-size: 1.1rem;
+            user-select: none;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .day-card:hover {
+            transform: translateY(-4px);
+            background-color: var(--hover-bg);
+            border-color: #555;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .day-card.completed {
+            background-color: var(--completed-bg);
+            border-color: #15803d;
+            color: white;
+            text-decoration: line-through;
+            animation: popIn 0.3s ease;
+        }
+
+        .day-card.completed::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.9);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .calendar-grid {
+                gap: 8px;
+                grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            }
+
+            .day-card {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>100 Days of Code</h1>
+    </header>
+
+    <div class="stats-container">
+        <div id="progress-text">Days Completed: 0 / 100</div>
+        <button id="reset-btn" onclick="resetProgress()">Reset All</button>
+    </div>
+
+    <div class="calendar-grid" id="grid"></div>
+
+    <script>
+        const totalDays = 100;
+        const gridContainer = document.getElementById('grid');
+        const progressText = document.getElementById('progress-text');
+        const storageKey = '100DaysOfCode_Data';
+
+        let completedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+        function saveProgress() {
+            localStorage.setItem(storageKey, JSON.stringify(completedDays));
+            updateUI();
+        }
+
+        function updateUI() {
+            progressText.innerText = `Days Completed: ${completedDays.length} / ${totalDays}`;
+
+            const cards = document.querySelectorAll('.day-card');
+            cards.forEach(card => {
+                const day = parseInt(card.getAttribute('data-day'));
+                if (completedDays.includes(day)) {
+                    card.classList.add('completed');
+                } else {
+                    card.classList.remove('completed');
+                }
+            });
+        }
+
+        function toggleDay(dayNumber) {
+            const isCompleted = completedDays.includes(dayNumber);
+
+            if (isCompleted) {
+                if (completedDays.includes(dayNumber + 1)) {
+                    alert(`You cannot skip steps! Uncheck Day ${dayNumber + 1} first.`);
+                    return;
+                }
+                completedDays = completedDays.filter(d => d !== dayNumber);
+            } else {
+                if (dayNumber > 1 && !completedDays.includes(dayNumber - 1)) {
+                    alert(`Slow down! You need to complete Day ${dayNumber - 1} first.`);
+                    return;
+                }
+                completedDays.push(dayNumber);
+            }
+            saveProgress();
+        }
+
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset your progress? This cannot be undone.")) {
+                completedDays = [];
+                saveProgress();
+            }
+        }
+
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            for (let i = 1; i <= totalDays; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('day-card');
+                dayDiv.innerText = i;
+                dayDiv.setAttribute('data-day', i);
+
+                dayDiv.addEventListener('click', () => toggleDay(i));
+
+                gridContainer.appendChild(dayDiv);
+            }
+            updateUI();
+        }
+
+        initGrid();
+    </script>
+</body>
+
+</html>
